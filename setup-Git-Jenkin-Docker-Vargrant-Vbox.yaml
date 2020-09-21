@@ -1,0 +1,112 @@
+---
+- name: Installing Git 
+  hosts: PIP
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: install git package
+  yum: name={{ item }} update_cache=yes state=latest
+  with_items:
+  - git
+- name: Installing Jenkins onlocal VM
+  hosts: PIP
+  gather_facts: true
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: Remove Java 1.7 and install Java 1.8
+  yum: name={{ item }} update_cache=yes state=absent
+  with_items:
+  - java-1.7.0-openjdk
+  - name: Install dependencies
+  yum: name={{ item }} update_cache=yes state=latest
+  with_items:
+  - java-1.8.0
+  - git
+  - wget
+- name: Download jenkins repo
+  command: wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
+
+- name: Import Jenkins CI key
+  rpm_key:
+  key: http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
+  state: present
+  - name: Install Jenkins
+  yum: name={{ item }} update_cache=yes state=latest
+  with_items:
+  - jenkins
+  - name: Allow port 8080
+  shell: iptables -I INPUT -p tcp --dport 8080 -m state --state NEW,ESTABLISHED -j ACCEPT
+- name: Start the server
+  service:
+  name: jenkins
+  state: started
+- name: Wait until the file /var/lib/jenkins/secrets/initialAdminPassword is present before continuing
+  wait_for:
+    path: /var/lib/jenkins/secrets/initialAdminPassword
+- name: Jenkings password
+  command: cat /var/lib/jenkins/secrets/initialAdminPassword
+  register: out
+- debug: var=out.stdout_lines
+- name: Installing Docker on VM
+  hosts: PIP
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: Add Docker repository
+  command: amazon-linux-extras install docker -y
+  - name: install packages
+  yum:
+  name: "{{ item }}"
+  update_cache: yes
+  state: latest
+  with_items:
+  - python
+  - java-1.8.0
+  - git
+- name: Start Docker service
+  service:
+  name: docker
+  state: started
+  enabled: yes
+- name: Install python package
+  command: easy_install docker-py
+  - lineinfile:
+  dest: /lib/systemd/system/docker.service
+  regexp: '^ExecStart='
+  line: 'ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock'
+- name: Reload systemd
+  sudo: yes
+  command: systemctl daemon-reload
+- name: docker restart
+  service:
+  name: docker
+  state: restarted
+ - name: Installing Vagrant 
+  hosts: PIP
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: install Vagrant package
+  command: wget https://releases.hashicorp.com/vagrant/2.2.9/vagrant_2.2.9_x86_64.deb
+  yum: name={{ item }} update_cache=yes state=latest
+  with_items:
+  - vagrant_2.2.9_x86_64.deb
+ - name: Installing virtualbox 
+  hosts: PIP
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: install Virtualbox package
+  yum: name={{ item }} update_cache=yes state=latest
+  with_items:
+  - virtualbox
+ - name: Installing python 
+  hosts: PIP
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: install python
+  yum: name={{ item }} update_cache=yes state=latest
+  with_items:
+  - python
