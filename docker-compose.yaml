@@ -4,17 +4,21 @@ services:
     image: mysql:8.0.19
     command: '--default-authentication-plugin=mysql_native_password'
     restart: always
+    secrets:
+      - db-password
     volumes:
       - db-data:/var/lib/mysql
     networks:
       - backend-network
     environment:
       - MYSQL_DATABASE=example
-      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-password
 
   app:
     build: app
     restart: always
+    secrets:
+      - db-password
     networks:
       - backend-network
       - frontend-network
@@ -28,6 +32,9 @@ services:
       - frontend-network
 volumes:
   db-data:
+secrets:
+  db-password:
+    file: db/password.txt
 networks:
   backend-network:
   frontend-network:
