@@ -5,7 +5,7 @@
 spin up VM with centos with At least 8 GB of RAM and 15 GB of free hard disk space for the virtual machines. ensure port 22, 8080 and 8080 is available for traffic
 Software Installations and commands:
 update  hosts: PIP in file setup-Git-Jenkin-Docker-Vargrant-Vbox.yaml
-Run below command on host:
+Run below command on host: 
 - yum install  wget ;
 - yum install curl ;
 - yum install ansible;
@@ -38,4 +38,7 @@ K8S-M-1 at eth1: 192.168.50.11
 K8S-N-1 at eth1: 192.168.50.12
 K8S-N-2 at eth1: 192.168.50.13
 vboxnet0 virtual iface: 192.168.50.1
+
+Application available at http://<IP host>/80
+
 

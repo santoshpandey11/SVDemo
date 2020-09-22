@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  labels:
+    app: myapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+          - name: DB deployment
+            image: mysql:8.0.19
+            restart: always
+            secrets:
+              - db-password
+            volumes:
+              - db-data:/var/lib/mysql
+            networks:
+              - backend-network
+			resources:
+              requests:
+                memory: "512Mi"
+                cpu: "250m"
+              limits:
+                memory: "1024Mi"
+                cpu: "500m"
+
+          - name: app deployment
+            build: app
+              restart: always
+	          volumes:
+                - ./app/src:/code
+              secrets:
+                - db-password
+              networks:
+                - backend-network
+                - frontend-network
+
+          - name: web deployment
+            build: web
+              restart: always
+              ports:
+                - 80:80
+              networks:
+                - frontend-network				  
+    
+	
+volumes:
+  db-data:
+secrets:
+  db-password:
+    file: db/password.txt
+networks:
+  backend-network:
+  frontend-network:	
+	
+------
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
